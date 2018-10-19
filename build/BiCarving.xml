@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Parameters>
+	<WhatToDo>1</WhatToDo>
+	<!-- 0 nothing-->
+	<!-- 1 singlecrystalline pillar-->
+	<!-- 2 bicrystal with defined boundary-->
+	<GBTriangleSurface>Debug.csv</GBTriangleSurface>
+	<!-- a list of triangles and their vertices defining the grain boundary plane-->
+	<CylinderHeight>69.0</CylinderHeight>
+	<CylinderRadius>69.0</CylinderRadius>	
+	<!-- in nanometer, the cylinder through which the boundary cuts and from which we cut the tip-->
+	<LatticeConstant>0.410</LatticeConstant>
+	<!-- in nanometer-->
+	<AxisAngleSX>1.0;0.0;0.0;0.0</AxisAngleSX>
+	<!--axis-angle parameterized orientation of singlecrystalline pillar surplus positive 0.5deg active rotation about x then y then z-->
+	<BungeEulerGrain1>0.0;0.0;0.0</BungeEulerGrain1>
+	<BungeEulerGrain2>10.0;0.0;0.0</BungeEulerGrain2>
+	<!-- Bunge Euler angle notation orientation of the adjoining grains separated by the boundary-->
+
+	<IOBoundary>0</IOBoundary>
+	<!-- show triangle strip representing the boundary-->
+	<IOAtoms>1</IOAtoms>
+	<!-- show atom positions-->
+	<!--0 specifies off, 1 on-->
+	
+	<!--SINGLECRYSTALLINE SETTINGS-->
+	<!--in nanometer-->
+	<SXFrustHeight>15.0</SXFrustHeight>
+	<SXFrustRadiusB>10.0</SXFrustRadiusB>
+	<SXFrustRadiusT>8.0</SXFrustRadiusT>
+	<SXBlowup>2.0</SXBlowup>
+	<SXBaseEpsilon>0.2</SXBaseEpsilon>
+	<!--concial frustum with currently a halfsphere on top-->
+	
+	<PRNGSeed>1234</PRNGSeed>
+	<PRNGDiscard>700000</PRNGDiscard>
+	<!--MersenneTwister warmup see Matsumoto and Saito and LEcuyer-->
+	<PRNGThinning>0.05</PRNGThinning>
+	<!--1.0 nothing kicked out, 0.0 everythin kicked out-->
+	<TAPSIMVacIndex>0</TAPSIMVacIndex>
+	<TAPSIMBaseIndex>2</TAPSIMBaseIndex>
+	<TAPSIMTipIndex>10</TAPSIMTipIndex>
+</Parameters>
