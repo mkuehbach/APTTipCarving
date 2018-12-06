@@ -9,6 +9,33 @@
 
 #include "BiCarving_Settings.h"
 
+struct t3x3
+{
+	apt_real a11;				//a second order rank tensor with row-column indexing
+	apt_real a12;
+	apt_real a13;
+	apt_real a21;
+	apt_real a22;
+	apt_real a23;
+	apt_real a31;
+	apt_real a32;
+	apt_real a33;
+	t3x3() :	a11(1.0), a12(0.0), a13(0.0),
+				a21(0.0), a22(1.0), a23(0.0),
+				a31(0.0), a32(0.0), a33(1.0) {}	//initialize to identity tensor
+	t3x3(	const apt_real _a11, const apt_real _a12, const apt_real _a13,
+			const apt_real _a21, const apt_real _a22, const apt_real _a23,
+			const apt_real _a31, const apt_real _a32, const apt_real _a33 ) :
+				a11(_a11), a12(_a12), a13(_a13),
+				a21(_a21), a22(_a22), a23(_a23),
+				a31(_a31), a32(_a32), a33(_a33) {}
+	t3x3 premultiplyR1( t3x3 const & R1 );
+	t3x3 inverse();
+};
+
+std::ostream& operator << (std::ostream& in, t3x3 const & val);
+
+
 
 struct p3d
 {
@@ -19,6 +46,8 @@ struct p3d
 	p3d() : x(0.f), y(0.f), z(0.f) {}
 	p3d(const apt_real _x, const apt_real _y, const apt_real _z) :
 		x(_x), y(_y), z(_z) {}
+	p3d active_rotation_relocate( t3x3 const & R );
+
 };
 
 ostream& operator<<(ostream& in, p3d const & val);
@@ -34,6 +63,8 @@ struct p3dm1
 	p3dm1() : x(0.f), y(0.f), z(0.f), m(UNKNOWNTYPE) {}
 	p3dm1(const apt_real _x, const apt_real _y, const apt_real _z, const unsigned int _m ) :
 		x(_x), y(_y), z(_z), m(_m) {}
+	p3dm1(const p3d _p, const unsigned int _m ) :
+		x(_p.x), y(_p.y), z(_p.z), m(_m) {}
 };
 
 ostream& operator<<(ostream& in, p3dm1 const & val);
@@ -44,12 +75,14 @@ struct v3d
 	apt_real u;
 	apt_real v;
 	apt_real w;
-	apt_real SQR_len;
+//	apt_real SQR_len;
 	v3d() : u(0.f), v(0.f), w(0.f) {} //, SQR_len(0.f) {}
 	v3d( const apt_real _u, const apt_real _v, const apt_real _w ) :
 		u(_u), v(_v), w(_w) {} //, SQR_len( SQR(_u)+SQR(_v)+SQR(_w) ) {}
 
-	//inline apt_real len() const;
+//	apt_real SQRLen();
+	apt_real dot( v3d const & b); //me acting as partner a to get dotproduct a * b i.e. this instance * b
+	v3d cross( v3d const & b ); //me acting as partner a to get cross-product a x b i.e. this instance x b
 	void normalize();
 	void orientnormal( v3d const & reference );
 };
@@ -57,10 +90,12 @@ struct v3d
 ostream& operator<<(ostream& in, v3d const & val);
 
 
+/*
 inline bool SortSQRLenAscending( const v3d &aa1, const v3d &aa2)
 {
-	return aa1.SQR_len < aa2.SQR_len;
+	return aa1.SQRLen() < aa2.SQRLen();
 }
+*/
 
 
 struct tri3d
@@ -92,11 +127,11 @@ ostream& operator<<(ostream& in, tri3d const & val);
 
 struct plane3d
 {
-	p3d center;
+	p3d ptest;
 	v3d ounormal;
-	plane3d() : center(p3d()), ounormal(v3d()) {}
-	plane3d(const p3d _c, const v3d _oun) :
-		center(_c), ounormal(_oun) {}
+	plane3d() : ptest(p3d()), ounormal(v3d()) {}
+	plane3d(const p3d _pt, const v3d _oun) :
+		ptest(_pt), ounormal(_oun) {}
 };
 
 
@@ -179,6 +214,36 @@ struct synstats
 
 ostream& operator<<(ostream& in, synstats const & val);
 
+struct synstats2
+{
+	apt_int tipatomsA;
+	apt_int tipatomsB;
+	apt_int zoneIatomsA;
+	apt_int zoneIatomsB;
+	apt_int zoneIIatomsA;
+	apt_int zoneIIatomsB;
+	apt_int baseatomsA;
+	apt_int baseatomsB;
+	apt_int thinnedoutA;
+	apt_int thinnedoutB;
+	synstats2() : tipatomsA(0), tipatomsB(0),
+			zoneIatomsA(0), zoneIatomsB(0),
+			zoneIIatomsA(0), zoneIIatomsB(0),
+			baseatomsA(0), baseatomsB(0),
+			thinnedoutA(0), thinnedoutB(0) {}
+	synstats2( const apt_int _ta, const apt_int _tb,
+			const apt_int _zIa, const apt_int _zIb,
+			const apt_int _zIIa, const apt_int _zIIb,
+			const apt_int _basea, const apt_int _baseb,
+			const apt_int _thina, const apt_int _thinb) :
+				tipatomsA(_ta), tipatomsB(_tb),
+				zoneIatomsA(_zIa), zoneIatomsB(_zIb),
+				zoneIIatomsA(_zIIa), zoneIIatomsB(_zIIb),
+				baseatomsA(_basea), baseatomsB(_baseb),
+				thinnedoutA(_ta), thinnedoutB(_tb) {}
+};
+
+ostream& operator<<(ostream& in, synstats2 const & val);
 
 class cylinder
 {

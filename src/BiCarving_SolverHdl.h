@@ -18,7 +18,7 @@ public:
 	~solverHdl();
 
 	singlecrystal* sx;
-	bicrystal* bx;
+	polycrystal* px;
 
 	profiler tictoc;
 

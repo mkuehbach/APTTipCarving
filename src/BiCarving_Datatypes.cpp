@@ -9,7 +9,6 @@
 
 
 
-
 ostream& operator<<(ostream& in, p3d const & val)
 {
 	in << val.x << ";" << val.y << ";" << val.z << endl;
@@ -29,6 +28,80 @@ inline apt_real v3d::len() const
 	return (this->SQR_len > EPSILON) ? sqrt(this->SQR_len) : 0.f;
 }
 */
+
+
+t3x3 t3x3::premultiplyR1( t3x3 const & R1)
+{
+	return t3x3(	R1.a11*this->a11 + R1.a12*this->a21 + R1.a13*this->a31,
+					R1.a11*this->a12 + R1.a12*this->a22 + R1.a13*this->a32,
+					R1.a11*this->a13 + R1.a12*this->a23 + R1.a13*this->a33,
+
+					R1.a21*this->a11 + R1.a22*this->a21 + R1.a23*this->a31,
+					R1.a21*this->a12 + R1.a22*this->a22 + R1.a23*this->a32,
+					R1.a21*this->a13 + R1.a22*this->a23 + R1.a23*this->a33,
+
+					R1.a31*this->a11 + R1.a32*this->a21 + R1.a33*this->a31,
+					R1.a31*this->a12 + R1.a32*this->a22 + R1.a33*this->a32,
+					R1.a31*this->a13 + R1.a32*this->a23 + R1.a33*this->a33  );
+}
+
+
+t3x3 t3x3::inverse()
+{
+	apt_real det = 	1.f /
+					( + this->a11*(this->a22*this->a33 - this->a32*this->a23)
+					- this->a21*(this->a12*this->a33 - this->a32*this->a13)
+					+ this->a31*(this->a12*this->a23 - this->a22*this->a13)    );
+
+	return t3x3(	det*(this->a22*this->a33 - this->a23*this->a32),
+					det*(this->a13*this->a32 - this->a12*this->a33),
+					det*(this->a12*this->a23 - this->a13*this->a22),
+
+					det*(this->a23*this->a31 - this->a21*this->a33),
+					det*(this->a11*this->a33 - this->a13*this->a31),
+					det*(this->a13*this->a21 - this->a11*this->a23),
+
+					det*(this->a21*this->a32 - this->a22*this->a31),
+					det*(this->a12*this->a31 - this->a11*this->a32),
+					det*(this->a11*this->a22 - this->a12*this->a21)     );
+}
+
+
+ostream& operator << (ostream& in, t3x3 const & val) {
+	in << val.a11 << ";" << val.a12 << ";" << val.a13 << "\n";
+	in << val.a21 << ";" << val.a22 << ";" << val.a23 << "\n";
+	in << val.a31 << ";" << val.a32 << ";" << val.a33 << endl;
+	return in;
+}
+
+
+p3d p3d::active_rotation_relocate( t3x3 const & R )
+{
+	return p3d( 	R.a11 * this->x + R.a12 * this->y + R.a13 * this->z,
+					R.a21 * this->x + R.a22 * this->y + R.a23 * this->z,
+					R.a31 * this->x + R.a32 * this->y + R.a33 * this->z   );
+}
+
+/*
+apt_real v3d::SQRLen()
+{
+	return (SQR(this->u)+SQR(this->v)+SQR(this->w));
+}
+*/
+
+
+apt_real v3d::dot( v3d const & b)
+{
+	return (this->u * b.u + this->v * b.v + this->w * b.w);
+}
+
+
+v3d v3d::cross( v3d const & b )
+{
+	return v3d( this->v * b.w - this->w * b.v,
+				this->w * b.u - this->u * b.w,
+				this->u * b.v - this->v * b.u );
+}
 
 void v3d::normalize()
 {
@@ -53,7 +126,7 @@ void v3d::orientnormal( v3d const & reference )
 
 ostream& operator<<(ostream& in, v3d const & val)
 {
-	in << val.u << ";" << val.v << ";" << val.w << "----" << val.SQR_len << endl;
+	in << val.u << ";" << val.v << ";" << val.w << endl; // "----" << val.SQR_len << endl;
 	return in;
 }
 
@@ -177,6 +250,17 @@ ostream& operator<<(ostream& in, sqb const & val)
 ostream& operator<<(ostream& in, synstats const & val)
 {
 	in << "Zone0/ZoneI/ZoneII/Base/Thinnedout = " << val.tipatoms << ";" << val.zoneIatoms << ";" << val.zoneIIatoms << ";" << val.baseatoms << ";" << val.thinnedout << endl;
+	return in;
+}
+
+
+ostream& operator<<(ostream& in, synstats2 const & val)
+{
+	in << "Zone0(A/B) = " << val.tipatomsA << ";" << val.tipatomsB << "\n";
+	in << "ZoneI(A/B) = " << val.zoneIatomsA << ";" << val.zoneIatomsB << "\n";
+	in << "ZoneII(A/B) = " << val.zoneIIatomsA << ";" << val.zoneIIatomsB << "\n";
+	in << "Base(A/B) = " << val.baseatomsA << ";" << val.baseatomsB << "\n";
+	in << "ThinnedOut(A/B) = "<< val.thinnedoutA << ";" << val.thinnedoutB << endl;
 	return in;
 }
 

@@ -34,6 +34,12 @@ typedef size_t apt_int;
 #define PARAPROBE_YAXIS					1
 #define PARAPROBE_ZAXIS					2
 
+//MK::convention position of point relative to triangle or plane in 3d
+#define	BOUNDARYFRONT					1
+#define BOUNDARYINSIDE					2
+#define BOUNDARYBEHIND					3
+#define BOUNDARYEPSDISTANCE				(0.5) //in nanometer!
+
 //MK::Mersenne initialization
 #define MT19937SEED						(-1)
 #define MT19937WARMUP					(700000)

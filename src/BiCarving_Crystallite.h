@@ -59,12 +59,17 @@ public:
 	boundary();
 	~boundary();
 
-	void read_triangulation();
+	void read_plane( v3d const & normal, p3d const & ptest );
+	void read_triangulation( const string vtk_io_fn );
+	void compute_consistent_ounormals();
 
-	//inline bool in_front_of_me( p3d const & p ) const;
+	unsigned int robust_relative_position_plane( p3d const & p );
+	unsigned int robust_relative_position_trianglepatch( p3d const & p );
 
-	vector<tri3d> triangulation;
-	vector<plane3d> simplex;
+	plane3d simple;
+	vector<tri3d> trimesh;
+	vector<plane3d> cutplanes;
+	aabb3d container;
 };
 
 

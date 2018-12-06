@@ -8,10 +8,17 @@
 
 
 WHAT_TO_DO Settings::WhatToDo = E_NOTHING;
+GB_INPUT_HOW Settings::GBModel = E_GB_NOTHING;
+ORI_INPUT_HOW Settings::OriParameterization = E_ORI_NOTHING;
 string Settings::GBTriSurface = "";
+string Settings::GBPlaneNormal = "";
+string Settings::GBPointOnPlane = "";
 string Settings::AxisAngleSX = "";
 string Settings::BungeEulerGrain1 = "";
 string Settings::BungeEulerGrain2 = "";
+string Settings::Orimatrix1 = "";
+string Settings::Orimatrix2 = "";
+apt_real Settings::GBBoundaryThickness = 0.f;
 apt_real Settings::CylHeight = 0.f;
 apt_real Settings::CylRadius = 0.f;
 apt_real Settings::LatticeConstant = 0.f;
@@ -63,7 +70,8 @@ void Settings::readXML(string filename) {
 		throw runtime_error("Undefined parameters file!");
 	}
 
-	unsigned int mode = 0;
+	unsigned int mode;
+	mode = 0;
 	if (0 != rootNode->first_node("WhatToDo"))
 		mode = str2long( rootNode->first_node("WhatToDo")->value() );
 	switch (mode)
@@ -76,20 +84,70 @@ void Settings::readXML(string filename) {
 			WhatToDo = E_NOTHING;
 	}
 
-	if (0 != rootNode->first_node("GBTriangleSurface"))
-		GBTriSurface = rootNode->first_node("GBTriangleSurface")->value();
+	mode = 0;
+	if (0 != rootNode->first_node("GBModel"))
+		mode = str2long( rootNode->first_node("GBModel")->value() );
+	switch (mode)
+	{
+		case E_GB_EXPLICIT_TRIANGLEMESH:
+			GBModel = E_GB_EXPLICIT_TRIANGLEMESH;
+			if (0 != rootNode->first_node("GBTriangleSurface"))
+				GBTriSurface = rootNode->first_node("GBTriangleSurface")->value();
+			break;
+		case E_GB_PLANENORMAL_AND_POINT:
+			GBModel = E_GB_PLANENORMAL_AND_POINT;
+			if (0 != rootNode->first_node("GBPlaneNormal"))
+				GBPlaneNormal = rootNode->first_node("GBPlaneNormal")->value();
+			if (0 != rootNode->first_node("GBPointOnPlane"))
+				GBPointOnPlane = rootNode->first_node("GBPointOnPlane")->value();
+			break;
+		default:
+			GBModel = E_GB_NOTHING;
+	}
+
+
+	if (0 != rootNode->first_node("GBPlaneNormal"))
+		GBPlaneNormal = rootNode->first_node("GBPlaneNormal")->value();
+	if (0 != rootNode->first_node("GBPointOnPlane"))
+		GBPointOnPlane = rootNode->first_node("GBPointOnPlane")->value();
+	if (0 != rootNode->first_node("GBBoundaryThickness"))
+		GBBoundaryThickness = str2real( rootNode->first_node("GBBoundaryThickness")->value() );
+
 	if (0 != rootNode->first_node("CylinderHeight"))
 		CylHeight = str2real( rootNode->first_node("CylinderHeight")->value() );
 	if (0 != rootNode->first_node("CylinderRadius"))
 		CylRadius = str2real( rootNode->first_node("CylinderRadius")->value() );
 	if (0 != rootNode->first_node("LatticeConstant"))
 		LatticeConstant = str2real( rootNode->first_node("LatticeConstant")->value() );
-	if (0 != rootNode->first_node("AxisAngleSX"))
-		AxisAngleSX = rootNode->first_node("AxisAngleSX")->value();
-	if (0 != rootNode->first_node("BungeEulerGrain1"))
-		BungeEulerGrain1 = rootNode->first_node("BungeEulerGrain1")->value();
-	if (0 != rootNode->first_node("BungeEulerGrain2"))
-		BungeEulerGrain2 = rootNode->first_node("BungeEulerGrain2")->value();
+
+	mode = 0;
+	if (0 != rootNode->first_node("OriParameterization"))
+		mode = str2long( rootNode->first_node("OriParameterization")->value() );
+	switch (mode)
+	{
+		case E_ORI_AXISANGLE:
+			OriParameterization = E_ORI_AXISANGLE;
+			if (0 != rootNode->first_node("AxisAngleSX"))
+				AxisAngleSX = rootNode->first_node("AxisAngleSX")->value();
+			 break;
+		case E_ORI_BUNGEEULER:
+			OriParameterization = E_ORI_BUNGEEULER;
+			if (0 != rootNode->first_node("BungeEulerGrain1"))
+				BungeEulerGrain1 = rootNode->first_node("BungeEulerGrain1")->value();
+			if (0 != rootNode->first_node("BungeEulerGrain2"))
+				BungeEulerGrain2 = rootNode->first_node("BungeEulerGrain2")->value();
+			break;
+		case E_ORI_MATRIX:
+			OriParameterization = E_ORI_MATRIX;
+			if (0 != rootNode->first_node("OMGrain1"))
+				Orimatrix1 = rootNode->first_node("OMGrain1")->value();
+			if (0 != rootNode->first_node("OMGrain2"))
+				Orimatrix2 = rootNode->first_node("OMGrain2")->value();
+			break;
+		default:
+			OriParameterization = E_ORI_NOTHING;
+	}
+
 
 	if (0 != rootNode->first_node("SXFrustHeight"))
 		SXFrustHeight = str2real( rootNode->first_node("SXFrustHeight")->value() );
@@ -129,7 +187,7 @@ bool Settings::checkUserInput()
 			cout << "Generating single crystalline pillar" << "\n";
 			break;
 		case E_BICRYSTAL:
-			cout << "Generating bicrystalline pillar with defined boundary geometry" << "\n";
+			cout << "Generating bicrystalline pillar with defined separating boundary geometry" << "\n";
 			break;
 		default:
 			cout << "Nothing to do, will quit now"; return false;
@@ -149,13 +207,33 @@ bool Settings::checkUserInput()
 	}
 
 	cout << "BicrystalCarving utilizes the following settings..." << "\n";
+	switch(Settings::GBModel)
+	{
+		case E_GB_EXPLICIT_TRIANGLEMESH:
+			cout << "Use explicit triangle mesh of the boundary for construction" << "\n";
+			break;
+		case E_GB_PLANENORMAL_AND_POINT:
+			cout << "Use given plane normal and point on the plane for construction" << "\n";
+	}
 	cout << "Triangles in\t\t\t" << Settings::GBTriSurface << "\n";
 	cout << "CylinderHeight\t\t\t" << Settings::CylHeight << " nm" << "\n";
 	cout << "CylinderRadius\t\t\t" << Settings::CylRadius << " nm" << "\n";
 	cout << "LatticeConstant\t\t\t" << Settings::LatticeConstant << " nm" << "\n";
-	cout << "AxisAngleSX\t\t" << Settings::AxisAngleSX << "\n";
-	cout << "BungeEulerGrain1\t\t" << Settings::BungeEulerGrain1 << "\n";
-	cout << "BungeEulerGrain2\t\t" << Settings::BungeEulerGrain2 << "\n";
+
+	switch(Settings::OriParameterization)
+	{
+		case E_ORI_AXISANGLE:
+			cout << "AxisAngleSX\t\t" << Settings::AxisAngleSX << "\n";
+			break;
+		case E_ORI_BUNGEEULER:
+			cout << "BungeEulerGrain1\t\t" << Settings::BungeEulerGrain1 << "\n";
+			cout << "BungeEulerGrain2\t\t" << Settings::BungeEulerGrain2 << "\n";
+			break;
+		case E_ORI_MATRIX:
+			cout << "Orimatrix1\t\t" << Settings::Orimatrix1 << "\n";
+			cout << "Orimatrix2\t\t" << Settings::Orimatrix2 << "\n";
+			break;
+	}
 
 	cout << "SXFrustHeight\t\t" << Settings::SXFrustHeight << " nm" << "\n";
 	cout << "SXFrustRadiusB\t\t" << Settings::SXFrustRadiusB << " nm" << "\n";

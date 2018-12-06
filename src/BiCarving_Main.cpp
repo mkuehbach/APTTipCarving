@@ -111,29 +111,34 @@ int main(int argc, char** argv)
 	//generate MPI rank solverHdl instance managing which of the parameter configuration rank 0 does
 	int localhealth = 1;
 	solverHdl* hdl = NULL;
-	try {
-		hdl = new solverHdl;
-		hdl->sx = NULL;
-		hdl->bx = NULL;
-		if ( Settings::WhatToDo == E_SINGLECRYSTAL ) {
-			hdl->sx = new singlecrystal( hdl );
+	if ( Settings::WhatToDo == E_SINGLECRYSTAL || Settings::WhatToDo == E_BICRYSTAL ) {
+		try {
+			hdl = new solverHdl;
+			hdl->sx = NULL;
+			hdl->px = NULL;
+			if ( Settings::WhatToDo == E_SINGLECRYSTAL ) {
+				hdl->sx = new singlecrystal( hdl );
+			}
+			else if ( Settings::WhatToDo == E_BICRYSTAL ) {
+				hdl->px = new polycrystal( hdl );
+			}
+			hdl->myRank = r;
+			hdl->nRanks = nr;
 		}
-		else { // ( Settings::WhatToDo == E_BICRYSTAL ) {
-			hdl->bx = new bicrystal( hdl );
+		catch (bad_alloc &mpiexc) {
+			stopping("Unable to allocate a solverInstance");
 		}
-
-		hdl->myRank = r;
-		hdl->nRanks = nr;
 	}
-	catch (bad_alloc &mpiexc) {
+	else {
+		reporting( r, " I dont know what to do!");
 		localhealth = 0;
-		stopping("Unable to allocate a solverInstance");
 	}
 	//were all processes, who should have, able to generate a process-local solver class object instance?
 	int globalhealth = 0;
 	MPI_Allreduce(&localhealth, &globalhealth, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	if ( globalhealth != nr ) {
 		stopping("Not all processes were able to allocate a solverInstance");
+		delete hdl; hdl = NULL;
 		MPI_Finalize();
 		return 0;
 	}
@@ -165,10 +170,75 @@ int main(int argc, char** argv)
 								stod(argv[OM21]), stod(argv[OM22]), stod(argv[OM23]),
 								stod(argv[OM31]), stod(argv[OM32]), stod(argv[OM33])   );
 
-		hdl->sx->process( ax_dummy, om_dummy );
+		hdl->sx->process_sx( ax_dummy, om_dummy );
+	}
+	else if ( Settings::WhatToDo == E_BICRYSTAL ) {
+		//size_t nsemicola = std::count( command.begin(), command.end(), ';') + 1;
+		stringstream parsethis;
+		string datapiece;
+		double buffer[9];
+
+		bool geometrystatus = true;
+		if ( Settings::GBModel == E_GB_PLANENORMAL_AND_POINT ) {
+			parsethis << Settings::GBPlaneNormal;
+			for( int i = 0; i < 3; ++i ) {
+				getline( parsethis, datapiece, ';');
+				buffer[i] = stod(datapiece);
+			}
+			hdl->px->gb.simple.ounormal = v3d( buffer[0], buffer[1], buffer[2] );
+			hdl->px->gb.simple.ounormal.normalize();
+	cout << "GBPlane = " << hdl->px->gb.simple.ounormal << endl;
+
+			parsethis << Settings::GBPointOnPlane;
+			for( int i = 0; i < 3; ++i ) {
+				getline( parsethis, datapiece, ';');
+				buffer[i] = stod(datapiece);
+			}
+			hdl->px->gb.simple.ptest = p3d( buffer[0], buffer[1], buffer[2] ); //in nanometer!
+	cout << "GBPosition = " << hdl->px->gb.simple.ptest << endl;
+		}
+		else if ( Settings::GBModel == E_GB_EXPLICIT_TRIANGLEMESH ) {
+			hdl->px->gb.read_triangulation( Settings::GBTriSurface );
+	cout << "GB triangle mesh read containing " << hdl->px->gb.trimesh.size() << " triangles" << endl;
+			hdl->px->gb.compute_consistent_ounormals();
+	cout << "GB triangle indices and corresponding outer unit normals are now consistent" << endl;
+		}
+		else {
+	cout << "The geometry of the boundary is undefined!" << endl;
+			geometrystatus = false;
+		}
+
+		stringstream oo1( Settings::Orimatrix1 );
+		for( int i = 0; i < 9; ++i ) {
+			getline( oo1, datapiece, ';');
+cout << "__" << datapiece.c_str() << "___" << endl;
+			buffer[i] = stod(datapiece);
+		}
+		t3x3 om1i = t3x3( 	buffer[0], buffer[1], buffer[2],
+							buffer[3], buffer[4], buffer[5],
+							buffer[6], buffer[7], buffer[8]    );
+	cout << "R1 = " << om1i << endl;
+		//hdl->px->gA = t3x3( om1i );
+
+		stringstream oo2( Settings::Orimatrix2 );
+		for( int i = 0; i < 9; ++i ) {
+			getline( oo2, datapiece, ';');
+cout << "__" << datapiece.c_str() << "___" << endl;
+			buffer[i] = stod(datapiece);
+		}
+		t3x3 om2i = t3x3( 	buffer[0], buffer[1], buffer[2],
+							buffer[3], buffer[4], buffer[5],
+							buffer[6], buffer[7], buffer[8]    );
+	cout << "R2 = " << om2i << endl;
+		//hdl->px->gB = t3x3( om2i );
+
+		//only if boundary geometry is setup properly we do it
+		if ( geometrystatus == true ) {
+			hdl->px->process_px( om1i, om2i );
+		}
 	}
 	else {
-		hdl->bx->process();
+		reporting( r, "I don't know what to do!");
 	}
 
 //delete solverHdl, deconstruct parallel processes, and exit
@@ -176,7 +246,7 @@ int main(int argc, char** argv)
 	string mess = "Elapsed time on process " + to_string(hdl->myRank) + " " + to_string((gtoc-gtic)) + " seconds";
 	reporting( mess );
 	delete hdl->sx; hdl->sx = NULL;
-	delete hdl->bx; hdl->bx = NULL;
+	delete hdl->px; hdl->px = NULL;
 	delete hdl; hdl = NULL;
 
 //better have all processes joining to exit program cooperatively

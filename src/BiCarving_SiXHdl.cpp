@@ -243,7 +243,7 @@ cout << "Rfinal = " << RzyxR << endl;
 }
 */
 
-void singlecrystal::process(  axisangle const & targetori_ax, t3x3 const & targetori_om  )
+void singlecrystal::process_sx(  axisangle const & targetori_ax, t3x3 const & targetori_om  )
 {
 	//define geometry: zoneII (vacuum capsule, zoneI (guard zone about tip), and the tip itself
 	//all measures in nanometer

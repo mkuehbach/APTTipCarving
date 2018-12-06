@@ -6,50 +6,6 @@
 #include "BiCarving_Math.h"
 
 
-t3x3 t3x3::premultiplyR1( t3x3 const & R1)
-{
-	return t3x3(	R1.a11*this->a11 + R1.a12*this->a21 + R1.a13*this->a31,
-					R1.a11*this->a12 + R1.a12*this->a22 + R1.a13*this->a32,
-					R1.a11*this->a13 + R1.a12*this->a23 + R1.a13*this->a33,
-
-					R1.a21*this->a11 + R1.a22*this->a21 + R1.a23*this->a31,
-					R1.a21*this->a12 + R1.a22*this->a22 + R1.a23*this->a32,
-					R1.a21*this->a13 + R1.a22*this->a23 + R1.a23*this->a33,
-
-					R1.a31*this->a11 + R1.a32*this->a21 + R1.a33*this->a31,
-					R1.a31*this->a12 + R1.a32*this->a22 + R1.a33*this->a32,
-					R1.a31*this->a13 + R1.a32*this->a23 + R1.a33*this->a33  );
-}
-
-
-t3x3 t3x3::inverse()
-{
-	apt_real det = 	1.f /
-					( + this->a11*(this->a22*this->a33 - this->a32*this->a23)
-					- this->a21*(this->a12*this->a33 - this->a32*this->a13)
-					+ this->a31*(this->a12*this->a23 - this->a22*this->a13)    );
-
-	return t3x3(	det*(this->a22*this->a33 - this->a23*this->a32),
-					det*(this->a13*this->a32 - this->a12*this->a33),
-					det*(this->a12*this->a23 - this->a13*this->a22),
-
-					det*(this->a23*this->a31 - this->a21*this->a33),
-					det*(this->a11*this->a33 - this->a13*this->a31),
-					det*(this->a13*this->a21 - this->a11*this->a23),
-
-					det*(this->a21*this->a32 - this->a22*this->a31),
-					det*(this->a12*this->a31 - this->a11*this->a32),
-					det*(this->a11*this->a22 - this->a12*this->a21)     );
-}
-
-
-ostream& operator << (ostream& in, t3x3 const & val) {
-	in << val.a11 << ";" << val.a12 << ";" << val.a13 << "\n";
-	in << val.a21 << ";" << val.a22 << ";" << val.a23 << "\n";
-	in << val.a31 << ";" << val.a32 << ";" << val.a33 << endl;
-	return in;
-}
-
 
 
 

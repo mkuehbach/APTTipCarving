@@ -19,7 +19,7 @@ public:
 	singlecrystal( solverHdl * own );
 	~singlecrystal();
 
-	void process( axisangle const & targetori_ax, t3x3 const & targetori_om );
+	void process_sx( axisangle const & targetori_ax, t3x3 const & targetori_om );
 
 /*
 	void define_domain();
